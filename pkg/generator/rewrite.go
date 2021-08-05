@@ -39,7 +39,7 @@ func Rewrite(filename string) ([]byte, error) {
 	}
 
 	// add import declaration
-	astutil.AddImport(fset, oldAST, "github.com/bigwhite/functrace")
+	astutil.AddImport(fset, oldAST, "github.com/uguangtian/functrace")
 	//fmt.Printf("added=%#v\n", added)
 
 	// inject code into each function declaration
