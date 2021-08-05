@@ -2,7 +2,8 @@
 
 package functrace
 
-func Trace() func() {
+//use for what?  func Trace() func() {
+func shadeTrace() func() {
 	return func() {
 
 	}

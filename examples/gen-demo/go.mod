@@ -1,4 +1,4 @@
-module github.com/uguangtian/functrace-demo
+module github.com/uguangtian/gen-demo
 
 go 1.14
 
