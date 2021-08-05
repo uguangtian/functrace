@@ -2,7 +2,7 @@
 package functrace_test
 
 import (
-	"github.com/bigwhite/functrace"
+	"github.com/uguangtian/functrace"
 )
 
 func a() {

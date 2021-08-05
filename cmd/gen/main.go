@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bigwhite/functrace/pkg/generator"
+	"github.com/uguangtian/functrace/pkg/generator"
 )
 
 var (

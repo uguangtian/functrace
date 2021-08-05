@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/bigwhite/functrace"
 	"sync"
+
+	"github.com/uguangtian/functrace"
 )
 
 func A1() {
