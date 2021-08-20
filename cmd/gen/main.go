@@ -11,22 +11,45 @@ import (
 )
 
 var (
-	wrote bool
+	wrote   bool
+	unset   bool
+	version bool
 )
 
 func init() {
-	flag.BoolVar(&wrote, "w", false, "write result to (source) file instead of stdout")
+
+	// -unset -w file.go
+	// flag.BoolVar(&unset, "unset ", false, "reset functrace flag")
+
+	// -w file.go
+	// flag.BoolVar(&wrote, "w", false, "write result to (source) file instead of stdout")
+
 }
 
 func usage() {
+
 	fmt.Println("gen [-w] xxx.go")
-	flag.PrintDefaults()
+	fmt.Println("gen [-w] [-unset] xxx.go")
+	// flag.PrintDefaults()
+}
+
+func Init() {
+
+	// 当为false时,设-v则为true,当为true时，设-v仍为true
+
+	flag.BoolVar(&unset, "unset", false, "reset functrace")
+	flag.BoolVar(&wrote, "w", false, "write result to (source) file instead of stdout")
+	flag.Parse()
+
 }
 
 func main() {
+
 	fmt.Println(os.Args)
-	flag.Usage = usage
+	Init()
 	flag.Parse()
+
+	flag.Usage = usage
 
 	if len(os.Args) < 2 {
 		usage()
@@ -38,17 +61,34 @@ func main() {
 		file = os.Args[2]
 	}
 
+	if len(os.Args) == 4 {
+		file = os.Args[3]
+	}
+
 	if len(os.Args) == 2 {
 		file = os.Args[1]
 	}
+
 	if filepath.Ext(file) != ".go" {
 		usage()
 		return
 	}
+	var (
 
-	newSrc, err := generator.Rewrite(file)
-	if err != nil {
-		panic(err)
+		//新文件缓存
+		newSrc []byte
+		err    error
+	)
+	if unset {
+		newSrc, err = generator.Remove(file)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		newSrc, err = generator.Rewrite(file)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if newSrc == nil {

@@ -11,37 +11,25 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
-func hasFuncDecl(f *ast.File) bool {
-	if len(f.Decls) == 0 {
-		return false
-	}
-
-	for _, decl := range f.Decls {
-		_, ok := decl.(*ast.FuncDecl)
-		if ok {
-			return true
-		}
-	}
-
-	return false
-}
-
-func Rewrite(filename string) ([]byte, error) {
+func Remove(filename string) ([]byte, error) {
 	fset := token.NewFileSet()
 	oldAST, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing %s: %w", filename, err)
 	}
+	//fmt.Printf("%#v\n", *oldAST)
 
+	//没有函数
 	if !hasFuncDecl(oldAST) {
 		return nil, nil
 	}
 
 	// add import declaration
-	astutil.AddImport(fset, oldAST, "github.com/uguangtian/functrace")
+	astutil.DeleteImport(fset, oldAST, "github.com/uguangtian/functrace")
+	//fmt.Printf("added=%#v\n", added)
 
 	// inject code into each function declaration
-	addDeferTraceIntoFuncDecls(oldAST)
+	removeDeferTraceIntoFuncDecls(oldAST)
 
 	buf := &bytes.Buffer{}
 	err = format.Node(buf, fset, oldAST)
@@ -50,18 +38,16 @@ func Rewrite(filename string) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
-
-func addDeferTraceIntoFuncDecls(f *ast.File) {
+func removeDeferTraceIntoFuncDecls(f *ast.File) {
 	for _, decl := range f.Decls {
 		fd, ok := decl.(*ast.FuncDecl)
 		if ok {
 			// inject code to fd
-			addDeferStmt(fd)
+			removeDeferStmt(fd)
 		}
 	}
 }
-
-func addDeferStmt(fd *ast.FuncDecl) (added bool) {
+func removeDeferStmt(fd *ast.FuncDecl) (removed bool) {
 	stmts := fd.Body.List
 
 	// check whether "defer functrace.Trace()()" has already exists
@@ -86,31 +72,16 @@ func addDeferStmt(fd *ast.FuncDecl) (added bool) {
 			continue
 		}
 		if (x.Name == "functrace") && (se.Sel.Name == "Trace") {
-			// already exist , return
-			return false
+			// already exist , remove
+			newList := make([]ast.Stmt, len(stmts)-1)
+			//第一个元素stmt?
+			copy(newList, stmts[1:])
+			fd.Body.List = newList
+			removed = true
+			return
 		}
 	}
 
 	// not found "defer functrace.Trace()()"
-	// add one
-	ds := &ast.DeferStmt{
-		Call: &ast.CallExpr{
-			Fun: &ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "functrace",
-					},
-					Sel: &ast.Ident{
-						Name: "Trace",
-					},
-				},
-			},
-		},
-	}
-
-	newList := make([]ast.Stmt, len(stmts)+1)
-	copy(newList[1:], stmts)
-	newList[0] = ds
-	fd.Body.List = newList
-	return true
+	return
 }

@@ -5,5 +5,5 @@ echo $files
 
 for f in $files
 do 
-		gen -w $f
+		gen -w -unset $f
 done
